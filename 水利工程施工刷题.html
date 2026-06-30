@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>水利工程施工 刷题库</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f0f4f8;color:#333;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;padding:16px 20px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.2);position:sticky;top:0;z-index:100}
+.header h1{font-size:1.4em;margin-bottom:4px}
+.header .sub{font-size:.8em;opacity:.85}
+.container{max-width:800px;margin:0 auto;padding:16px}
+
+/* Mode cards */
+.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.mode-card{background:#fff;border-radius:12px;padding:18px 14px;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:all .2s;border:2px solid transparent}
+.mode-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.15);border-color:#2980b9}
+.mode-card .icon{font-size:2em;margin-bottom:6px}
+.mode-card .title{font-size:1em;font-weight:bold;margin-bottom:3px}
+.mode-card .desc{font-size:.75em;color:#888}
+.mode-card.exam{border-left:3px solid #e74c3c}
+.mode-card.error{border-left:3px solid #f39c12}
+
+/* Chapter filter */
+.filter-panel{background:#fff;border-radius:12px;padding:14px 16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.filter-panel h3{font-size:.95em;margin-bottom:10px;color:#1a5276}
+.chapter-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.chapter-tag{padding:8px 6px;border-radius:8px;text-align:center;cursor:pointer;font-size:.78em;border:2px solid #ddd;background:#fafafa;transition:all .15s;user-select:none}
+.chapter-tag.active{border-color:#2980b9;background:#eaf2fb;color:#1a5276;font-weight:bold}
+.chapter-tag .count{font-size:.7em;color:#999;display:block}
+.chapter-tag.active .count{color:#2980b9}
+.filter-actions{display:flex;gap:8px;margin-top:10px}
+.filter-actions button{padding:6px 14px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;font-size:.8em;transition:all .15s}
+.filter-actions button:hover{background:#2980b9;color:#fff;border-color:#2980b9}
+.filter-info{margin-top:8px;font-size:.8em;color:#666}
+
+/* Question area */
+.question-area{background:#fff;border-radius:12px;padding:20px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.06);min-height:300px}
+.q-progress{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;font-size:.82em;color:#888}
+.q-progress .bar{flex:1;height:6px;background:#e0e0e0;border-radius:3px;margin:0 12px;overflow:hidden}
+.q-progress .bar div{height:100%;background:#2980b9;border-radius:3px;transition:width .3s}
+.q-type{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.75em;font-weight:bold;margin-bottom:10px}
+.q-type.single{background:#e8f5e9;color:#2e7d32}
+.q-type.multi{background:#fff3e0;color:#e65100}
+.q-type.judge{background:#e3f2fd;color:#1565c0}
+.q-type.essay{background:#fce4ec;color:#c62828}
+.q-text{font-size:1.05em;line-height:1.7;margin:12px 0;font-weight:500}
+.q-options{margin:8px 0}
+.q-option{display:block;width:100%;text-align:left;padding:12px 14px;margin:6px 0;border-radius:8px;border:2px solid #e0e0e0;background:#fafafa;cursor:pointer;font-size:.95em;transition:all .15s;line-height:1.5}
+.q-option:hover{border-color:#2980b9;background:#f0f7ff}
+.q-option.selected{border-color:#2980b9;background:#dbeafe;font-weight:bold}
+.q-option.correct{border-color:#27ae60!important;background:#d5f5e3!important;color:#1e8449!important}
+.q-option.wrong{border-color:#e74c3c!important;background:#fadbd8!important;color:#c0392b!important}
+.q-option:disabled{cursor:not-allowed;opacity:.8}
+.q-answer-box{margin-top:14px;padding:12px;background:#eafaf1;border-radius:8px;font-size:.9em;color:#1e8449;display:none;line-height:1.6}
+.q-answer-box.show{display:block}
+.q-answer-box.wrong-ans{background:#fdedec;color:#c0392b}
+.btn{display:inline-block;padding:10px 22px;border-radius:8px;border:none;cursor:pointer;font-size:.9em;font-weight:bold;transition:all .15s}
+.btn-primary{background:#2980b9;color:#fff}
+.btn-primary:hover{background:#1a5276}
+.btn-outline{background:#fff;color:#2980b9;border:2px solid #2980b9}
+.btn-outline:hover{background:#2980b9;color:#fff}
+.btn-danger{background:#e74c3c;color:#fff}
+.btn-warning{background:#f39c12;color:#fff}
+.q-nav{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:10px;flex-wrap:wrap}
+.q-nav .nav-btns{display:flex;gap:8px}
+
+/* Exam mode */
+.exam-header{background:#fff;border-radius:12px;padding:14px 20px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.exam-timer{font-size:1.4em;font-weight:bold;color:#e74c3c;font-variant-numeric:tabular-nums}
+.exam-progress{font-size:.9em;color:#666}
+
+/* Result screen */
+.result-card{background:#fff;border-radius:12px;padding:24px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.result-score{font-size:3em;font-weight:bold;color:#2980b9;margin:10px 0}
+.result-detail{font-size:.9em;color:#666;margin:6px 0}
+.result-list{margin-top:16px;text-align:left}
+.result-item{display:flex;align-items:flex-start;padding:8px 10px;margin:4px 0;border-radius:6px;font-size:.85em;gap:8px;line-height:1.5}
+.result-item.ok{background:#eafaf1}
+.result-item.fail{background:#fdedec}
+.result-item .mark{font-weight:bold;font-size:1.1em;min-width:24px}
+
+/* Error bank */
+.error-list .error-item{background:#fff;border-radius:10px;padding:14px;margin:8px 0;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.error-item .retry-btn{margin-top:8px}
+
+/* Back button */
+.back-btn{display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:.85em;color:#2980b9;margin-bottom:12px;border:none;background:none}
+.back-btn:hover{text-decoration:underline}
+
+/* Responsive */
+@media(max-width:500px){
+  .mode-cards{grid-template-columns:1fr}
+  .chapter-grid{grid-template-columns:repeat(2,1fr)}
+  .q-nav{flex-direction:column}
+}
+
+.hidden{display:none!important}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+
+/* Confetti-like simple animation */
+@keyframes pop{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.score-pop{animation:pop .5s ease-out}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>水利工程施工 刷题库</h1>
+  <div class="sub">6章 · 181题 · 顺序/乱序/考试/错题</div>
+</div>
+
+<div class="container" id="app"></div>
+
+<script>
+// ==================== 题库数据 ====================
+const Q = []; function addQ(c,t,q,o,a){Q.push({id:Q.length+1,chapter:c,type:t,q:q,opts:o||[],ans:a})}
+const CH = ['','施工水流控制','工程爆破技术','地基处理技术','土石坝施工','混凝土坝施工','地下建筑施工'];
+
+// ======== 第1章 施工水流控制 (37题) ========
+addQ(1,'single','导流明渠的进出口与上下游围堰之间一般要保持（ ）的距离。',['A. 30~50 m','B. 50~100 m','C. 100~150m'],'B');
+addQ(1,'single','划分导流时段时应尽可能采用（ ）围堰，进行枯水期导流。',['A. 高水头','B. 低水头','C. 混凝土'],'B');
+addQ(1,'single','导流建筑物根据其保护对象、失事后果、使用年限和工程规模划分为（ ）级。',['A. Ⅰ~Ⅱ','B. Ⅲ~Ⅳ','C. Ⅲ~Ⅴ'],'C');
+addQ(1,'single','导流设计流量是指（ ）。',['A. 施工河道的天然来水量','B. 工程项目施工期间河水的最大流量','C. 按某一时段所选择的某一设计频率下的最大流量'],'C');
+addQ(1,'single','截流的施工过程包括（ ）等工作。',['A. 戗堤进占、形成龙口、龙口加固','B. 戗堤进占、形成龙口、龙口范围的加固、合龙','C. 戗堤进占、形成龙口、龙口范围的加固、合龙与闭气'],'C');
+addQ(1,'single','截流日期一般选择在枯水期的（ ）。',['A. 前期','B. 中期','C. 期末'],'A');
+addQ(1,'single','基坑初期排水水位下降速度一般以每昼夜（ ）为宜。',['A. 0.3~0.5 m','B. 0.5~1.0 m','C. 1.0~1.5 m'],'B');
+addQ(1,'single','基坑经常性排水的方法有（ ）两大类。',['A. 经验法和试抽法','B. 管井法和井点法','C. 明沟式排水和人工降低地下水位'],'C');
+addQ(1,'single','人工降低地下水位的方法，按排水工作原理的不同，可分为（ ）两种。',['A. 明沟法和帷幕法','B. 管井法和井点法','C. 虹吸法和管井法'],'B');
+addQ(1,'single','在河谷狭窄的山区河流新建拱坝宜选用的施工导流方式是（ ）。',['A. 明渠导流','B. 底孔导流','C. 束窄河床导流','D. 隧洞导流'],'D');
+addQ(1,'single','水库大坝采用全段围堰法导流，工作内容：①截流②围堰填筑③围堰拆除④导流隧洞开挖⑤基坑排水⑥坝体填筑。正确施工顺序是（ ）。',['A. ④①②⑤⑥③','B. ④②①⑥⑤③','C. ①④②⑥③⑤','D. ①②④③⑥⑤'],'A');
+addQ(1,'single','某不过水土石围堰，上游挡水位30m，下游29.4m，水位差0.6m，波浪爬高0.5m，安全超高1.0m，上游堰顶高程至少应为（ ）。',['A. 31.0m','B. 31.5m','C. 31.6m','D. 32.1m'],'B');
+addQ(1,'single','下列导流方式中，属于混凝土坝分段围堰导流方式的是（ ）导流。',['A. 明渠','B. 隧洞','C. 涵管','D. 底孔'],'D');
+addQ(1,'single','隧洞导流进出口与上下游围堰之间要有适当距离，一般大于50m，目的是（ ）。',['A. 减小对施工的干扰','B. 防止水流冲刷围堰的迎水面','C. 平顺的引导水流'],'B');
+addQ(1,'single','三峡工程施工采用的是（ ）分段围堰法导流。',['A. 两段两期','B. 两段三期','C. 三段三期'],'B');
+addQ(1,'single','关于截流施工水力计算的目的，选项不正确的是（ ）。',['A. 确定截流戗轴线位置和龙口宽度','B. 确定截流过程中龙口诸水力参数的变化规律','C. 确定截流材料的尺寸、重量和数量'],'A');
+addQ(1,'multi','为了创造必要的施工条件，将原河流各个时期的来水按预定方式安全地导向下游或拦蓄起来，这就是（ ）。',['A. 施工过程中的水流控制，也称之为施工导流','B. 施工导流，也称之施工过程中的水流控制','C. 导流方式，也称之为导流方法','D. 导流安排，也称之为导流方案','E. 防洪，也称之为防洪度汛'],'AB');
+addQ(1,'multi','施工导流设计的主要任务包括（ ）。',['A. 选定导流标准，划分导流时段，确定导流设计流量','B. 选择导流方案及导流建筑物的形式','C. 确定导流建筑物的布置、构造及尺寸','D. 拟定导流建筑物的修建、拆除、堵塞的施工方法','E. 拟定截流，拦洪渡汛，基坑排水等措施'],'ABCDE');
+addQ(1,'multi','施工导流的基本方法有（ ）。',['A. 全段围堰法','B. 分段围堰法','C. 上下游围堰法','D. 左右岸基坑法','E. 淹没基坑法'],'AB');
+addQ(1,'multi','水利枢纽施工中，后期导流按泄水建筑物形式的不同主要分为（ ）等。',['A. 大坝底孔导流','B. 坝体缺口导流','C. 未完建的电站厂房导流','D. 完建的部分闸孔导流','E. 预留泄水建筑物导流'],'ABCDE');
+addQ(1,'multi','在分段围堰法导流中，确定纵向围堰位置需考虑的主要因素包括：（ ）。',['A. 河流过水断面宽度的大小','B. 束窄河床流速不得超过通航、筏运、围堰与河床的允许流速','C. 各段主体工程量、施工强度比较均匀','D. 便于后期导流泄水建筑物的布置','E. 降低后期截流的难度'],'BCDE');
+addQ(1,'multi','导流时段的划分与（ ）等因素有关。',['A. 河流水文特征','B. 地形','C. 水工建筑物型式','D. 导流方案','E. 施工进度'],'ABCDE');
+addQ(1,'multi','截流的基本方法有（ ）。',['A. 戗堤法','B. 立堵法','C. 平堵法','D. 抛掷法','E. 水力法'],'BC');
+addQ(1,'multi','截流水力计算的目的在于（ ）。',['A. 确定龙口位置并选择截流方法','B. 确定截流过程中龙口各水力参数及其变化规律','C. 确定截流设备及其规格型号','D. 确定截流材料的尺寸或重量及相应的数量','E. 确定河床束窄度的大小'],'BD');
+addQ(1,'multi','上游围堰堰顶高程与下列哪些因素有关：（ ）。',['A. 下游水位高程','B. 波浪爬高','C. 围堰的安全超高','D. 上下游水位差','E. 是否有滞洪作用','F. 区域的水文特性'],'ABCDE');
+addQ(1,'multi','导流临时建筑物与永久水工建筑物有可能结合的情况是：（ ）。',['A. 施工导流隧洞与永久泄洪洞相结合','B. 施工导流隧洞与永久尾水洞相结合','C. 施工导流隧洞与永久引水洞相结合','D. 利用水电站引水渠和尾水渠进行施工导流','E. 利用原来的坝体作为水库下游改建工程施工期围堰'],'ABCDE');
+addQ(1,'multi','选择施工导流方案时应考虑的主要因素包括（ ）。',['A. 河流水文特性、枢纽地形条件、地质及水文地质条件','B. 枢纽建筑物的型式及其布置','C. 导流建筑物与永久建筑物可能结合的情况','D. 施工期间河水的综合利用要求','E. 施工进度和施工方法及施工场地布置'],'ABCDE');
+addQ(1,'judge','坝体施工期临时度汛的导流标准，应根据坝型和拦洪库容大小确定。（ ）',[],'正确');
+addQ(1,'judge','下游围堰堰顶高程的确定，不用考虑围堰的安全超高。（ ）',[],'错误');
+addQ(1,'judge','管井法是单纯重力作用排水。（ ）',[],'正确');
+addQ(1,'judge','水利工程施工中，基坑经常性排水量包括基坑初期积水量。（ ）',[],'错误');
+addQ(1,'judge','土石围堰及草土围堰可与永久建筑物相结合并作为其组成部分。（ ）',[],'错误');
+addQ(1,'judge','坝体泄洪缺口宜设在河岸边，避免下泄水流冲刷岸坡。（ ）',[],'错误');
+addQ(1,'judge','导流明渠弯道半径不宜小于3倍明渠底宽。（ ）',[],'正确');
+addQ(1,'judge','为了确保截流成功，截流日期应选择在枯水期的末期进行。（ ）',[],'错误');
+addQ(1,'essay','举例说明，什么是施工导流方案？',[],'施工导流方案是指在水利工程施工过程中，为将原河道水流按预定方式、时间、地点安全地导向下游或拦蓄起来，而制定的总体部署和安排。例如三峡工程采用三期导流方案：第一期围右岸开挖导流明渠，江水从左岸主河道下泄；第二期围左岸主河道修建大坝和厂房，江水从导流明渠下泄；第三期封堵导流明渠，江水从大坝泄洪底孔下泄。');
+addQ(1,'essay','某水闸除险加固工程采用一次拦断河床（全段）围堰法施工，利用新挖导流明渠导流。监理认为开挖导流明渠工程量较大。请提出适宜的导流方案。',[],'可采用分段围堰法导流。利用老闸作为纵向围堰，分两期施工：第一期利用原河道导流，围护新闸施工区域，完成扩建新闸；第二期利用已建新闸导流，围护老闸区域，完成老闸加固。该方案可避免大规模开挖导流明渠，有效降低工程造价。');
+
+// ======== 第2章 工程爆破技术 (23题) ========
+addQ(2,'single','炸药在存放过程中，容易出现结块、挥发、渗油等现象，这是对炸药（ ）性能指标的描述。',['A. 安定性','B. 敏感度','C. 稳定性'],'A');
+addQ(2,'single','爆破漏斗底半径与最小抵抗线的比值称为（ ）。',['A. 不耦合系数','B. 标准爆破参数','C. 爆破作用指数'],'C');
+addQ(2,'single','炮孔直径与药卷直径的比值称为（ ）。',['A. 爆破作用指数','B. 不耦合系数','C. 标准爆破系数'],'B');
+addQ(2,'single','在规定的标准条件下，炸除单位体积介质的炸药消耗量称为（ ）。',['A. 标准耗药量','B. 单位耗药量','C. 集中耗药量'],'B');
+addQ(2,'single','工程爆破的单位耗药量随着临空面的增多而（ ）。',['A. 增加','B. 不变','C. 减少'],'C');
+addQ(2,'single','深孔爆破和浅孔爆破施工中均采用台阶布置，其好处是（ ）。',['A. 爆破作业更加安全可靠','B. 视野开阔，起爆人员方便撤离','C. 有利于提高爆破效果，降低成本，便于组织流水作业'],'C');
+addQ(2,'single','沿开挖边界布置密集炮孔，采取不耦合装药，在主爆区之前起爆形成预裂缝的爆破作业称为（ ）。',['A. 定向爆破','B. 预裂爆破','C. 光面爆破'],'B');
+addQ(2,'single','钻孔爆破不仅要堵塞炮孔，还要提高堵塞质量，其目的在于（ ）。',['A. 增加爆破的隐蔽性','B. 防止冲天炮的出现，提高爆破效果','C. 减小爆破地震能量'],'B');
+addQ(2,'single','沿开挖边界布置密集炮孔，采取不耦合装药，在主爆区之后起爆形成平整轮廓面的爆破作业称为（ ）。',['A. 定向爆破','B. 预裂爆破','C. 光面爆破'],'C');
+addQ(2,'single','预裂爆破和光面爆破沿设计轮廓能产生规整爆生裂缝面的关键在于（ ）。',['A. 炮孔布置的合理性','B. 采用不耦合装药结构','C. 起爆程序设计与控制'],'B');
+addQ(2,'multi','工程爆破施工中常用的起爆器材主要有：（ ）。',['A. 雷管','B. 导火索','C. 导爆索','D. 导爆管','E. 炸药'],'ABCD');
+addQ(2,'multi','药包在无限均匀介质中的爆破作用影响范围可划分为：（ ）。',['A. 药包圈','B. 压缩圈（粉碎圈）','C. 抛掷圈','D. 松动圈','E. 震动圈'],'BCDE');
+addQ(2,'multi','反映炸药基本性能的指标有（ ）、爆速与最佳密度。',['A. 安定性','B. 敏感性','C. 氧平衡','D. 威力','E. 殉爆距离'],'ABCDE');
+addQ(2,'multi','爆破漏斗的几何参数除了爆破漏斗半径、爆破作用半径，还包括：（ ）。',['A. 最小抵抗线','B. 爆破漏斗可见深度','C. 药包装药量的大小','D. 爆破抛掷距离','E. 爆破作用指数'],'ABDE');
+addQ(2,'multi','标准抛掷药包的标准条件包括：（ ）。',['A. 坚硬岩石基础','B. 单个球形集中药包','C. 爆破作用指数等于1','D. 使用标准炸药','E. 一个水平自由面'],'BCDE');
+addQ(2,'multi','根据爆破作用指数n对爆破分类，正确的是：（ ）。',['A. n<0.75为松动爆破','B. 0.75≤n<1为减弱抛掷爆破','C. n=1为标准抛掷爆破','D. n>1为加强抛掷爆破','E. n<0.33为振动爆破'],'ABCD');
+addQ(2,'multi','浅孔爆破的炮孔布置参数主要包括：（ ）。',['A. 最小抵抗线','B. 台阶高度','C. 炮孔深度','D. 孔距与排距','E. 堵塞长度'],'ABCDE');
+addQ(2,'multi','爆破公害的主要内容包括：（ ）。',['A. 爆破地震','B. 空气冲击波','C. 水中冲击波','D. 有毒气体','E. 爆破飞石'],'ABCDE');
+addQ(2,'multi','爆破作业中的不安全因素主要有：（ ）。',['A. 爆破飞石','B. 振动','C. 水中冲击波','D. 空气冲击波','E. 有毒气体'],'ABCDE');
+addQ(2,'judge','预裂爆破所形成的裂缝宽度越宽越好。（ ）',[],'错误');
+addQ(2,'judge','光面爆破与预裂爆破的成缝机理相同。（ ）',[],'正确');
+addQ(2,'judge','地下工程施工中应选择正氧平衡的炸药以减少有毒气体。（ ）',[],'错误');
+addQ(2,'essay','工程爆破中，影响装药量多少的因素有哪些？',[],'影响因素包括：（1）岩石性质（硬度、完整性、节理裂隙发育程度等）；（2）爆破方法（浅孔、深孔、硐室爆破等）；（3）临空面数量，临空面越多单位耗药量越少；（4）爆破作用指数n值；（5）炸药性能（爆力、猛度等）；（6）炮孔布置参数（最小抵抗线、孔距、排距、孔深等）；（7）堵塞质量；（8）自由面条件。');
+
+// ======== 第3章 地基处理技术 (30题) ========
+addQ(3,'single','岩基灌浆材料使用最广泛的是（ ）。',['A. 水泥浆','B. 水泥粘土浆','C. 化学灌浆'],'A');
+addQ(3,'single','对于多排帷幕灌浆，要按照（ ）的次序。',['A. 先灌上游，后灌下游，最后灌中间','B. 先灌上游，后灌中间，最后灌下游','C. 先灌下游，后灌上游，最后灌中间'],'C');
+addQ(3,'single','压水试验的时间要在（ ）进行。',['A. 钻孔结束时','B. 钻孔冲洗结束后','C. 结束灌浆封孔前'],'B');
+addQ(3,'single','岩基灌浆施工一般采用（ ）来表示岩层的渗透特性。',['A. 吸浆率','B. 吸水率','C. 透水率'],'C');
+addQ(3,'single','岩基灌浆施工过程中，浆液稠度变化应遵循（ ）的原则。',['A. 先稀后浓','B. 先浓后稀','C. 保持不变'],'A');
+addQ(3,'single','灌浆施工时，压水试验所使用的压力通常为同段灌浆孔灌浆压力的（ ）。',['A. 50%~60%','B. 70%~80%','C. 100%'],'B');
+addQ(3,'single','工程实践中，常用（ ）的大小来衡量砂砾石地基的可灌性。',['A. 可灌比值','B. 浆液比重','C. 灌浆压力'],'A');
+addQ(3,'single','关于砂砾石地层可灌性，下列说法正确的是（ ）。',['A. 可灌比是对水泥制浆材料而言的','B. 可灌比是对颗粒制浆材料而言的','C. 可灌比是对化学制浆材料而言的'],'B');
+addQ(3,'single','防渗墙施工，混凝土浇筑方法一般采用（ ）。',['A. 分缝分块法','B. 平层碾压法','C. 直升导管法'],'C');
+addQ(3,'single','防渗墙混凝土浇筑，要求槽孔段内混凝土上升速度不小于（ ）。',['A. 1.0 m/h','B. 2.0 m/h','C. 3.0 m/h'],'B');
+addQ(3,'single','水泥灌浆施工的主要技术环节包括：（ ）等。',['A. 钻孔、冲洗、浆液制备、灌浆、质量检查','B. 钻孔、冲洗、灌浆试验、灌浆、质量检查','C. 钻孔、冲洗裂隙、压水试验、灌浆、质量检查'],'C');
+addQ(3,'single','岩基灌浆的浆液灌注方式分为：（ ）两种。',['A. 高压式灌浆和低压式灌浆','B. 纯压式灌浆和循环式灌浆','C. 闭路式灌浆和开路式灌浆'],'B');
+addQ(3,'single','灌浆压力是指作用在灌浆孔段（ ）的压力。',['A. 顶部','B. 中部','C. 底部'],'B');
+addQ(3,'single','防渗墙施工在混凝土浇筑前，清孔换浆的目的是：（ ）。',['A. 节省泥浆用量','B. 方便检查成槽质量','C. 清除回落到孔底的沉渣，保证混凝土和不透水地层的连接质量'],'C');
+addQ(3,'single','岩石基础按灌浆目的分类有（ ）三种。',['A. 帷幕灌浆、固结灌浆、接触灌浆','B. 帷幕灌浆、固结灌浆、回填灌浆','C. 固结灌浆、接触灌浆、回填灌浆'],'A');
+addQ(3,'single','接触灌浆的最佳施工时机一般是（ ）。',['A. 基础开挖后立即进行','B. 坝体混凝土浇筑过程中随时进行','C. 坝体混凝土温度降至稳定温度后，混凝土收缩基本完成时','D. 大坝竣工蓄水之后'],'C');
+addQ(3,'single','关于帷幕灌浆与固结灌浆施工时序，正确的是（ ）。',['A. 两者均应在坝体混凝土浇筑完成后进行','B. 固结灌浆通常在基础开挖后、混凝土浇筑前进行，帷幕灌浆多在坝体浇筑到一定高程后进行','C. 帷幕灌浆必须在基础开挖后立即进行','D. 两者均应在基础开挖前完成'],'B');
+addQ(3,'multi','岩层裂隙冲洗方法分为：（ ）。',['A. 高压水冲洗','B. 单孔冲洗','C. 脉动冲洗','D. 群孔冲洗','E. 扬水冲洗'],'BD');
+addQ(3,'multi','岩基钻孔灌浆应遵循（ ）的原则。',['A. 分序加密','B. 顺序加密','C. 先固结后帷幕','D. 先帷幕后固结','E. 帷幕与固结并进'],'AC');
+addQ(3,'multi','防渗墙施工造孔前的准备工作主要包括：（ ）等。',['A. 场地平整','B. 修筑导向槽','C. 铺设钻机轨道','D. 泥浆制备','E. 混凝土制备'],'ABCD');
+addQ(3,'multi','防渗墙施工中，泥浆的主要作用包括：（ ）。',['A. 固壁','B. 悬浮岩屑','C. 冷却和润滑钻头','D. 防渗','E. 减轻钻头磨损'],'ABCD');
+addQ(3,'multi','防渗墙施工钻挖机械成槽的方法主要有：（ ）等。',['A. 板桩法','B. 钻劈法','C. 钻抓法','D. 分层钻进法','E. 铣削法'],'BCDE');
+addQ(3,'multi','砂砾石地基能否接受灌浆有效灌入，主要取决于：（ ）。',['A. 地层的颗粒组成、细粒含量、渗透系数','B. 灌浆设备型号及作业条件','C. 浆液的性质和制浆材料的粒径','D. 灌浆孔口的封闭程度和灌浆段的长短','E. 实施的灌浆压力和施工工艺'],'ACE');
+addQ(3,'multi','关于岩基灌浆施工，选项正确的是：（ ）。',['A. 钻孔与灌浆应遵循分序加密原则','B. 同一地段基岩须先固结灌浆后帷幕灌浆','C. 主要技术环节包括钻孔、冲洗、压水试验、灌浆、质检','D. 孔口封闭灌浆法须采用循环式自上而下分段灌浆','E. 多排帷幕应按先灌上游，后灌下游，最后灌中间'],'ABCD');
+addQ(3,'multi','防渗墙施工泥浆下浇筑混凝土的要求是：（ ）。',['A. 首先要进行清孔换浆','B. 导管布置要均匀合理','C. 不允许泥浆与混凝土掺混形成夹层','D. 确保混凝土与基础及一、二期混凝土之间的结合','E. 要连续浇筑一气呵成'],'CDE');
+addQ(3,'judge','防渗墙施工中槽孔内注入泥浆的主要作用是直接形成防渗层。（ ）',[],'错误');
+addQ(3,'judge','灌浆压力指的是作用在灌浆孔中部的压力。（ ）',[],'错误');
+addQ(3,'judge','可灌比是对颗粒材料组成的浆材而言的，化学浆材不存在可灌比问题。（ ）',[],'正确');
+addQ(3,'essay','泥浆下浇筑混凝土属于隐蔽工程，浇筑质量如何保证？',[],'主要措施：（1）严格控制泥浆性能指标（密度、粘度、含砂量等），确保固壁和悬浮岩屑能力；（2）采用直升导管法浇筑，导管埋入深度不小于1.5m且不宜大于6m；（3）槽孔内混凝土上升速度不小于2m/h；（4）保证混凝土流动性，坍落度18~22cm；（5）连续浇筑避免中断，防止冷缝和夹泥；（6）浇筑后及时质检：钻孔取芯、压水试验及物探检测。');
+addQ(3,'essay','简述帷幕灌浆与固结灌浆的区别。',[],'帷幕灌浆：目的是在坝基形成防渗帷幕，减小渗透压力，布置在坝踵附近，孔深较大，灌浆压力较高。固结灌浆：目的是提高基岩整体性和弹性模量，增强地基承载力，在坝基范围内全面布置，孔深较浅。施工顺序：同一地段先进行固结灌浆，后进行帷幕灌浆。');
+
+// ======== 第4章 土石坝施工 (23题) ========
+addQ(4,'single','根据机械机构性能，在设计条件下不考虑施工对象差异连续工作达到的最高生产率称为（ ）。',['A. 理论生产率','B. 技术生产率','C. 实用生产率'],'A');
+addQ(4,'single','考虑了机械在施工对象和施工条件下连续工作能达到的生产率称为（ ）。',['A. 理论生产率','B. 技术生产率','C. 实用生产率'],'B');
+addQ(4,'single','考虑了机械在施工中各种不可避免的停歇（加油、换班等）能达到的生产率称为（ ）。',['A. 理论生产率','B. 技术生产率','C. 实用生产率'],'C');
+addQ(4,'single','碾压式土石坝施工中，挖掘机装满一车所需斗数的合适范围为（ ）。',['A. 3~5','B. 4~6','C. 7~9'],'A');
+addQ(4,'single','土石坝坝面压实作业机械选择正确的是（ ）。',['A. 平碾最适宜压实粘性土料','B. 羊脚碾最适宜压实粘性土料','C. 振动碾最适宜压实粘性土料'],'B');
+addQ(4,'single','土石坝坝面作业主要施工工序包括：（ ）。',['A. 卸料、铺料、洒水、压实','B. 卸料、铺料、压实、质量检查','C. 卸料、铺料、洒水、压实、层间刨毛'],'B');
+addQ(4,'single','碾压式土石坝填筑施工中，挖运强度与上坝强度的关系正确的是（ ）。',['A. 开挖强度<运输强度<上坝强度','B. 运输强度<上坝强度<开挖强度','C. 上坝强度<运输强度<开挖强度'],'C');
+addQ(4,'single','最优含水量是指（ ）的含水量。',['A. 满足施工要求','B. 干表观密度达到最大值时','C. 在某一击实次数下干表观密度达到最大值时'],'C');
+addQ(4,'single','碾压式土石坝联合机械化作业施工中的主导机械一般是指（ ）。',['A. 挖掘机械','B. 运输机械','C. 压实机械'],'C');
+addQ(4,'single','非粘性土（砂砾料）压实质量的主要控制指标是（ ）。',['A. 压实度和最优含水率','B. 相对密度（相对紧密度）','C. 干密度和压实遍数','D. 孔隙率和渗透系数'],'B');
+addQ(4,'multi','碾压式土石坝的施工主要作业包括：（ ）。',['A. 准备作业','B. 基本作业','C. 辅助作业','D. 附加作业','E. 机械作业'],'ABCD');
+addQ(4,'multi','土石坝施工料场规划包括：（ ）。',['A. 范围规划','B. 空间规划','C. 时间规划','D. 质与量规划','E. 规模规划'],'BCD');
+addQ(4,'multi','组织土石坝综合机械化施工应遵循的原则包括：（ ）。',['A. 充分发挥主要机械的作用','B. 根据工作特点选择挖运机械合理配套','C. 机械配套要有利使用、维修和管理','D. 加强管理调度提高机械时间利用系数','E. 合理布置工作面改善道路条件减少转移时间'],'ABCDE');
+addQ(4,'multi','土石坝的碾压方法通常采用：（ ）。',['A. 震动压实法','B. 进退错距法','C. 反复开行法','D. 转圈套压法','E. 交错穿插法'],'BD');
+addQ(4,'multi','压实机械按作用外力不同可分为：（ ）基本类型。',['A. 碾压','B. 静压','C. 夯击','D. 脉冲','E. 震动'],'ACE');
+addQ(4,'multi','影响土料压实效果的主要因素有：（ ）。',['A. 土料自身性质','B. 土料颗粒组成','C. 土料含水量','D. 压实方法','E. 压实功能的大小'],'ABCE');
+addQ(4,'multi','土石坝坝面作业粘性土的压实参数有：（ ）。',['A. 塑性指数','B. 铺土厚度','C. 碾压遍数','D. 容重的大小','E. 最优含水量'],'BCE');
+addQ(4,'multi','挖运机械的选择应考虑的因素有：（ ）。',['A. 工程特征与筑坝材料的性质','B. 料场有效土层的厚度','C. 机械操作人员的熟练程度','D. 运输距离的远近','E. 挖运机械的斗容量配套'],'ABDE');
+addQ(4,'judge','正向铲挖掘机更适用于挖掘停机面以下的土方和水下的土方。（ ）',[],'错误');
+addQ(4,'judge','振动碾最适宜压实非粘土。（ ）',[],'正确');
+addQ(4,'judge','压实砂砾石坝壳时砂石料的含水量必须保持为最优含水量。（ ）',[],'错误');
+addQ(4,'essay','碾压式土石坝施工中，粘性土料和非粘性土料在施工设备选择及技术措施方面有何不同？',[],'（1）压实机械：粘性土料宜用羊脚碾，利用搓揉作用密实；非粘性土料宜用振动碾，利用振动使颗粒重排列。（2）含水量控制：粘性土料须在最优含水量附近压实；非粘性土料可在天然含水量下碾压。（3）铺土厚度：粘性土料20~30cm；非粘性土料50~100cm。（4）层间处理：粘性土料需刨毛处理；非粘性土料一般不需。（5）压实参数：粘性土料为铺土厚度、碾压遍数、最优含水量；非粘性土料为铺料厚度、碾压遍数、洒水量。');
+
+// ======== 第5章 混凝土坝施工 (26题) ========
+addQ(5,'single','细骨料大小级配由细度模数控制，合理取值范围为（ ）。',['A. 1.0~2.0','B. 2.4~3.2','C. 3.5~4.0'],'B');
+addQ(5,'single','骨料生产能力的确定原则是（ ）。',['A. 供需平衡','B. 供大于需','C. 量力而行'],'A');
+addQ(5,'single','混凝土坝垂直于坝轴线方向的坝段之间的缝称为（ ）。',['A. 横缝','B. 纵缝','C. 施工缝'],'A');
+addQ(5,'single','混凝土坝非结构性横缝、坝段纵缝、浇筑块间垂直缝和水平缝都是（ ）。',['A. 永久缝','B. 冷缝','C. 施工缝'],'C');
+addQ(5,'single','混凝土卸料和转运自由跌落高度应不大于（ ）。',['A. 1.5m','B. 2.0m','C. 2.5m'],'B');
+addQ(5,'single','混凝土浇筑的施工过程包括：（ ）。',['A. 模板架立、入仓铺料、平仓振捣、养护','B. 混凝土制备、入仓铺料、平仓振捣、养护','C. 准备作业、入仓铺料、平仓振捣、养护'],'C');
+addQ(5,'single','施工缝处理的方法是：（ ）。',['A. 高压水枪或风砂枪冲毛清除水泥膜','B. 进行化学灌浆','C. 灌注水泥砂浆'],'A');
+addQ(5,'single','当层间间歇时间超过（ ）就会形成冷缝。',['A. 混凝土初凝时间','B. 混凝土终凝时间','C. 混凝土拌合时间'],'A');
+addQ(5,'single','混凝土重力坝浇筑中运输能力不足时通常的做法是（ ）。',['A. 暂时停止浇筑','B. 改平层浇筑为斜层浇筑或阶梯浇筑','C. 将仓块分割为更小尺寸'],'B');
+addQ(5,'single','立模浇筑混凝土时对模板产生最大侧压力的是（ ）。',['A. 已初凝的混凝土','B. 刚入仓尚未振捣的混凝土','C. 正在振捣的新浇混凝土','D. 养护达到设计强度的混凝土'],'C');
+addQ(5,'single','溢洪道溢流面混凝土浇筑最适宜的模板类型是（ ）。',['A. 拆移式模板','B. 滑动式模板','C. 移动式模板'],'B');
+addQ(5,'multi','模板的主要作用是：（ ）。',['A. 对新浇塑性混凝土起成型作用','B. 对新浇塑性混凝土起支撑作用','C. 对混凝土表面起保护作用','D. 改善混凝土表面质量','E. 加固混凝土构筑物'],'ABCD');
+addQ(5,'multi','对模板的基本要求包括：（ ）。',['A. 具有足够强度、刚度和稳定性','B. 有利于混凝土凝固、保温、抗冲、耐磨','C. 拼接缝严密不漏浆、表面平整光滑','D. 结构简单、制作安装拆除方便','E. 尽量标准化系列化、提高周转次数、成本低'],'ABCDE');
+addQ(5,'multi','混凝土拌和设备类型包括：（ ）。',['A. 鼓筒式拌和机','B. 双锥式拌和机','C. 自落式拌和机','D. 强制式拌和机','E. 推移式拌和机'],'CD');
+addQ(5,'multi','混凝土运输过程中的质量要求包括：（ ）。',['A. 不初凝、不分离、不漏浆','B. 保持拌合状态','C. 无严重泌水、无大的温度变化','D. 尽量早晚或夜间运输','E. 能保证混凝土入仓温度'],'ACE');
+addQ(5,'multi','大体积混凝土温度控制措施有：（ ）。',['A. 合理分缝分块','B. 重要工程关键部位冬季浇筑夏季停止','C. 降低混凝土入仓温度','D. 降低水化热温升','E. 中后期通水冷却'],'ACDE');
+addQ(5,'judge','人工骨料可提高混凝土的强度。（ ）',[],'正确');
+addQ(5,'judge','骨料加工厂的位置应尽可能布置在接近拌和楼的地方。（ ）',[],'正确');
+addQ(5,'judge','重力坝的横缝一般是不需要进行接缝灌浆处理的结构缝。（ ）',[],'正确');
+addQ(5,'judge','大体积混凝土温度控制的实质是将混凝土内部与基础温差控制在约束应力小于允许抗拉强度以内。（ ）',[],'正确');
+addQ(5,'judge','出料容量是指拌和机每次可搅拌出的最大混凝土容量。（ ）',[],'正确');
+addQ(5,'judge','混凝土拌和机的出料系数是指进料容量和出料容量的比值。（ ）',[],'错误');
+addQ(5,'judge','混凝土浇筑铺料层厚度取决于振捣设备能力并作为控制条件。（ ）',[],'错误');
+addQ(5,'judge','混凝土重力坝的纵缝一般不需要进行接缝灌浆处理。（ ）',[],'错误');
+addQ(5,'judge','层间间歇时间超过混凝土初凝时间就会形成冷缝。（ ）',[],'正确');
+addQ(5,'essay','确定大体积混凝土浇筑块尺寸应考虑哪些因素？',[],'主要因素：（1）浇筑能力，浇筑块尺寸应与拌和、运输、入仓设备能力匹配；（2）混凝土初凝时间，须在初凝前完成上层覆盖避免冷缝；（3）温度控制要求（基础温差、内外温差）；（4）坝体结构布置（横缝和纵缝间距）；（5）基础约束条件，约束范围内浇筑块尺寸宜减小；（6）施工进度要求。');
+
+// ======== 第6章 地下建筑工程施工 (42题) ========
+addQ(6,'single','隧洞施工当断面较大、围岩稳定性较差且地下水丰富，又缺少大型开挖设备时可采用（ ）方法开挖。',['A. 全断面','B. 下导洞','C. 上下导洞'],'C');
+addQ(6,'single','隧洞钻爆法开挖当出渣占用循环时间较长时可采用（ ）加速施工进度。',['A. 减小进尺长度','B. 二次倒渣','C. 增加运输设备'],'B');
+addQ(6,'single','隧洞洞线较长工期紧迫仅靠进出口两个工作面不能按期完工时应考虑（ ）。',['A. 增加开挖机械设备','B. 采用洞内分段施工','C. 开挖施工支洞或者竖井'],'C');
+addQ(6,'single','支护的目的是为了（ ）。',['A. 增加施工方便','B. 防止洞室围岩失稳而采用的加固措施','C. 保护洞内施工机械'],'B');
+addQ(6,'single','喷锚支护是在隧洞开挖后及时喷射混凝土加锚杆、钢筋网稳定围岩，这种施工方法称为（ ）。',['A. 新奥法','B. 传统支护法','C. 结构支护法'],'A');
+addQ(6,'single','掘进机与钻爆法相比最突出的优势是（ ）。',['A. 对地质条件适应性强','B. 设备投资低','C. 适合小断面隧洞施工','D. 可连续掘进实现开挖出渣支护联合作业'],'D');
+addQ(6,'single','下列不属于平洞施工主要施工过程的是（ ）。',['A. 地基处理','B. 开挖','C. 衬砌或支护','D. 出渣'],'A');
+addQ(6,'single','喷射混凝土施工前应根据围岩裂隙及渗漏水情况采取的措施是（ ）。',['A. 加大喷射厚度','B. 增加水泥用量','C. 预先引排或注浆堵水','D. 加快喷射速度'],'C');
+addQ(6,'single','平洞全断面开挖与断面分部开挖的主要区别在于（ ）。',['A. 使用的机械设备不同','B. 一次开挖的断面大小不同','C. 出渣方式不同','D. 爆破参数不同'],'B');
+addQ(6,'single','围岩整体破坏情况下不宜单独采用的支护型式是（ ）。',['A. 喷混凝土锚杆支护','B. 喷混凝土锚杆钢筋网支护','C. 单独锚杆支护','D. 喷混凝土锚杆钢拱架支护'],'C');
+addQ(6,'single','锚喷支护中锚杆的主要作用是（ ）。',['A. 封闭岩面防止风化','B. 将表层松动岩块与深层稳定岩体连接','C. 承受全部围岩压力','D. 起装饰作用'],'B');
+addQ(6,'single','新奥法的主要支护手段是（ ）。',['A. 钢拱架支护','B. 模筑混凝土衬砌','C. 锚喷支护','D. 木棚支架'],'C');
+addQ(6,'single','全断面隧道掘进机的英文缩写是（ ）。',['A. NATM','B. EPB','C. TBM','D. TMB'],'C');
+addQ(6,'single','钻孔爆破法中为控制开挖轮廓减少超欠挖常采用的爆破技术是（ ）。',['A. 光面爆破','B. 预裂爆破','C. 毫秒爆破','D. 定向爆破'],'A');
+addQ(6,'single','地质条件较好围岩稳定时宜优先采用的开挖方式是（ ）。',['A. 断面分部开挖','B. 全断面开挖','C. 导洞超前开挖','D. 台阶式开挖'],'B');
+addQ(6,'multi','地下建筑工程就其施工方法而言主要有（ ）。',['A. 全断面法开挖','B. 钻孔爆破法开挖','C. 断面分部法开挖','D. 联合掘进机开挖','E. 导洞法开挖'],'BD');
+addQ(6,'multi','平洞开挖方法主要有（ ）。',['A. 全断面开挖','B. 分段开挖','C. 断面分部开挖','D. 竖井开挖','E. 导洞扩大开挖'],'ACE');
+addQ(6,'multi','平洞导洞法开挖按导洞在设计断面中的相对位置可分为（ ）等方式。',['A. 上导洞','B. 下导洞','C. 中导洞','D. 上下导洞','E. 双侧导洞'],'ABCDE');
+addQ(6,'multi','平洞开挖断面上的钻孔按作用不同分为（ ）。',['A. 掏槽孔','B. 光爆孔','C. 崩落孔','D. 推进孔','E. 周边孔'],'ACE');
+addQ(6,'multi','地下建筑工程施工辅助作业内容包括：（ ）等。',['A. 通风散烟除尘','B. 排水','C. 照明','D. 风水电供应','E. 作业环境维护与安全防护'],'ABCDE');
+addQ(6,'multi','新奥法（NATM）的核心思想和施工原则包括（ ）。',['A. 充分利用围岩的自承能力','B. 开挖后及时进行支护','C. 采用厚混凝土衬砌承受全部围岩压力','D. 锚杆和喷射混凝土是主要支护手段','E. 通过围岩量测监控指导施工'],'ABDE');
+addQ(6,'multi','关于锚喷支护的特点和作用正确的有（ ）。',['A. 锚喷支护属于主动支护方式','B. 喷射混凝土可及时封闭岩面防止风化','C. 锚杆可将表层松动岩块与深层稳定岩体连接','D. 锚喷支护不能与钢筋网联合使用','E. 喷混凝土锚杆钢拱架支护适用于围岩压力大的情况'],'ABCE');
+addQ(6,'multi','钻孔爆破法开挖的主要施工程序包括（ ）。',['A. 钻孔','B. 装药','C. 爆破','D. 通风散烟','E. 出渣'],'ABCDE');
+addQ(6,'multi','盾构法施工的主要优点包括（ ）。',['A. 自动化程度高','B. 设备投资低','C. 施工效率高','D. 适合各种地质条件','E. 对周边环境影响小'],'ACE');
+addQ(6,'multi','地下工程中围岩的破坏形态可归纳为（ ）。',['A. 局部破坏','B. 整体破坏','C. 剪切破坏','D. 拉伸破坏','E. 疲劳破坏'],'AB');
+addQ(6,'judge','开挖和衬砌是平洞施工的两个主要施工过程。（ ）',[],'正确');
+addQ(6,'judge','在同一个横断面上应遵循先开挖后衬砌的顺序。（ ）',[],'正确');
+addQ(6,'judge','平洞施工下导洞法开挖适用于围岩稳定性差的情况。（ ）',[],'错误');
+addQ(6,'judge','平洞施工上导洞法或上下导洞法适用于围岩比较稳定的情况。（ ）',[],'错误');
+addQ(6,'judge','平洞开挖断面上掏槽孔眼的主要作用是增加爆破的临空面。（ ）',[],'正确');
+addQ(6,'judge','隧洞开挖为改善照明条件可应用220V的安全电压。（ ）',[],'错误');
+addQ(6,'judge','隧洞钢筋混凝土衬砌正常浇筑次序为先底拱（底板）、后边拱（边墙）、最后顶拱。（ ）',[],'正确');
+addQ(6,'judge','水工隧洞施工衬砌之后就没有必要再进行回填灌浆了。（ ）',[],'错误');
+addQ(6,'judge','喷混凝土支护施工应自下而上、先凹后凸。（ ）',[],'正确');
+addQ(6,'judge','喷射混凝土厚度越大支护效果越好。（ ）',[],'错误');
+addQ(6,'judge','新奥法的核心思想是让围岩成为支护体系的组成部分。（ ）',[],'正确');
+addQ(6,'judge','掘进机开挖是利用机械破碎岩石的原理完成开挖作业。（ ）',[],'正确');
+addQ(6,'judge','锚喷支护是喷混凝土支护、锚杆支护等多种支护型式的统称。（ ）',[],'正确');
+addQ(6,'judge','全断面开挖适用于围岩稳定性较差需要及时支护的情况。（ ）',[],'错误');
+addQ(6,'essay','地下建筑工程施工与地面工程施工比较有哪些特点？',[],'（1）作业空间狭窄受限，通风照明排水等辅助作业要求高；（2）围岩稳定性对施工安全影响大，需遵循"先支护后开挖"原则；（3）工序复杂，开挖出渣支护衬砌需合理衔接；（4）地质条件复杂多变难以完全预知，方案需动态调整；（5）施工环境恶劣，粉尘噪音潮湿有害气体等不利因素多；（6）安全管理要求高，需重点防范塌方涌水瓦斯爆炸等事故。');
+addQ(6,'essay','结合初期支护与二次衬砌的关系论述"先撑后衬、由临时到永久"的支护理念。',[],'"先撑后衬、由临时到永久"支护理念：隧洞开挖后首先及时施作初期支护（锚喷支护），利用围岩自身承载能力，允许围岩可控变形释放部分围岩压力；待围岩变形趋于稳定后再施作二次衬砌（模筑混凝土）形成永久支护。正确处理两者关系：①初期支护须及时跟进封闭岩面防止围岩风化松动；②通过围岩量测监控掌握变形动态确定合理二次衬砌时机；③初期支护为主承载结构，二次衬砌为安全储备和永久防护层，二者共同构成复合式衬砌体系。');
+addQ(6,'essay','简述土石坝施工与混凝土坝施工的质量控制要点。',[],'土石坝：严格控制土料含水率和颗粒级配；分层铺土控制铺土厚度；按规定碾压遍数碾压确保压实度和干密度达标；做好接缝和结合面处理。混凝土坝：严格控制原材料质量和配合比；保证拌合和运输质量防止离析；浇筑时控制铺料厚度保证振捣密实；做好温度控制防止温度裂缝；严格施工缝处理和养护。');
+
+// ==================== 应用逻辑 ====================
+const LS_ERR = 'slg_errors';
+const LS_HIST = 'slg_history';
+
+function loadErrors(){ try{ return JSON.parse(localStorage.getItem(LS_ERR)) || []; }catch(e){ return []; } }
+function saveErrors(arr){ localStorage.setItem(LS_ERR, JSON.stringify(arr)); }
+function addError(qid){ let errs=loadErrors(); if(!errs.includes(qid)){ errs.push(qid); saveErrors(errs); } }
+function removeError(qid){ let errs=loadErrors(); saveErrors(errs.filter(id=>id!==qid)); }
+function clearErrors(){ saveErrors([]); }
+
+let state = {
+  mode: 'home', // home|sequential|shuffle|exam|exam-result|errors
+  chapters: [1,2,3,4,5,6],
+  questions: [],
+  currentIndex: 0,
+  userAnswers: {},  // index -> answer string
+  showAnswer: {},
+  examStartTime: null,
+  examTimer: null,
+  examSubmitted: false,
+  results: []
+};
+
+function getChapterCounts(){
+  let counts = {};
+  [1,2,3,4,5,6].forEach(c=>{
+    counts[c] = Q.filter(q=>q.chapter===c).length;
+  });
+  return counts;
+}
+
+function getFilteredQuestions(){
+  return Q.filter(q=>state.chapters.includes(q.chapter));
+}
+
+function shuffle(arr){
+  let a=[...arr];
+  for(let i=a.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+// ==================== 渲染 ====================
+const app = document.getElementById('app');
+
+function typeLabel(t){ return {single:'单选题',multi:'多选题',judge:'判断题',essay:'简答题'}[t]||t; }
+function typeClass(t){ return {single:'single',multi:'multi',judge:'judge',essay:'essay'}[t]; }
+
+function renderHome(){
+  let counts = getChapterCounts();
+  let filtered = getFilteredQuestions();
+  let html = `
+    <div class="filter-panel">
+      <h3>📚 章节筛选</h3>
+      <div class="chapter-grid">
+        ${[1,2,3,4,5,6].map(c=>`
+          <div class="chapter-tag ${state.chapters.includes(c)?'active':''}" onclick="toggleChapter(${c})">
+            第${c}章<br><span class="count">${counts[c]}题</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="filter-actions">
+        <button onclick="selectAllChapters()">全选</button>
+        <button onclick="deselectAllChapters()">全不选</button>
+      </div>
+      <div class="filter-info">当前选中：<b>${filtered.length}</b> 题（共 ${Q.length} 题）</div>
+    </div>
+
+    <div class="mode-cards">
+      <div class="mode-card" onclick="startMode('sequential')">
+        <div class="icon">📖</div>
+        <div class="title">顺序练习</div>
+        <div class="desc">按章节顺序逐题练习</div>
+      </div>
+      <div class="mode-card" onclick="startMode('shuffle')">
+        <div class="icon">🔀</div>
+        <div class="title">乱序刷题</div>
+        <div class="desc">随机打乱顺序刷题</div>
+      </div>
+      <div class="mode-card exam" onclick="startExam()">
+        <div class="icon">📝</div>
+        <div class="title">模拟考试</div>
+        <div class="desc">限时作答 · 自动评分</div>
+      </div>
+      <div class="mode-card error" onclick="showErrors()">
+        <div class="icon">📋</div>
+        <div class="title">错题本</div>
+        <div class="desc">${loadErrors().length} 道错题待复习</div>
+      </div>
+    </div>
+  `;
+  app.innerHTML = html;
+}
+
+function toggleChapter(c){
+  if(state.chapters.includes(c)) state.chapters = state.chapters.filter(x=>x!==c);
+  else state.chapters.push(c);
+  state.chapters.sort();
+  renderHome();
+}
+function selectAllChapters(){ state.chapters=[1,2,3,4,5,6]; renderHome(); }
+function deselectAllChapters(){ state.chapters=[]; renderHome(); }
+
+// ========== 练习/乱序模式 ==========
+function startMode(mode){
+  let filtered = getFilteredQuestions();
+  if(filtered.length===0){ alert('请至少选择一个章节！'); return; }
+  state.mode = mode;
+  state.questions = mode==='shuffle' ? shuffle(filtered) : filtered;
+  state.currentIndex = 0;
+  state.userAnswers = {};
+  state.showAnswer = {};
+  state.results = [];
+  renderQuestion();
+}
+
+function startExam(){
+  let filtered = getFilteredQuestions();
+  if(filtered.length<5){ alert('请至少选择包含5道题的章节范围！'); return; }
+
+  // Build exam: pick up to 20 single, 10 multi, 10 judge (or proportional)
+  let singles = filtered.filter(q=>q.type==='single');
+  let multis = filtered.filter(q=>q.type==='multi');
+  let judges = filtered.filter(q=>q.type==='judge');
+  let essays = filtered.filter(q=>q.type==='essay');
+
+  let examQ = [];
+  examQ.push(...shuffle(singles).slice(0, Math.min(20, singles.length)));
+  examQ.push(...shuffle(multis).slice(0, Math.min(10, multis.length)));
+  examQ.push(...shuffle(judges).slice(0, Math.min(10, judges.length)));
+  if(essays.length>0) examQ.push(...shuffle(essays).slice(0, Math.min(2, essays.length)));
+  examQ = shuffle(examQ);
+
+  state.mode = 'exam';
+  state.questions = examQ;
+  state.currentIndex = 0;
+  state.userAnswers = {};
+  state.showAnswer = {};
+  state.results = [];
+  state.examStartTime = Date.now();
+  state.examSubmitted = false;
+
+  renderExamHeader();
+  renderQuestion();
+  startExamTimer();
+}
+
+function startExamTimer(){
+  state.examTimer = setInterval(()=>{
+    if(state.mode!=='exam' || state.examSubmitted) { clearInterval(state.examTimer); return; }
+    let el = document.getElementById('exam-timer');
+    if(el){
+      let elapsed = Math.floor((Date.now() - state.examStartTime)/1000);
+      let m = Math.floor(elapsed/60);
+      let s = elapsed%60;
+      el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+    let pel = document.getElementById('exam-progress');
+    if(pel){
+      pel.textContent = `第 ${state.currentIndex+1}/${state.questions.length} 题`;
+    }
+  }, 1000);
+}
+
+function renderExamHeader(){
+  let div = document.createElement('div');
+  div.className = 'exam-header';
+  div.id = 'exam-header';
+  div.innerHTML = `
+    <div><b>📝 模拟考试</b></div>
+    <div class="exam-timer" id="exam-timer">00:00</div>
+    <div class="exam-progress" id="exam-progress">第 1/${state.questions.length} 题</div>
+    <button class="btn btn-danger" onclick="submitExam()" style="font-size:.8em;padding:6px 14px">交卷</button>
+  `;
+  app.prepend(div);
+}
+
+function renderQuestion(){
+  if(state.questions.length===0){ renderHome(); return; }
+  let q = state.questions[state.currentIndex];
+  let idx = state.currentIndex;
+  let ua = state.userAnswers[idx] || '';
+  let showAns = state.showAnswer[idx];
+  let isEssay = q.type==='essay';
+
+  let progressPct = ((idx+1)/state.questions.length*100).toFixed(0);
+
+  let html = '';
+  // Remove old exam header if in practice mode
+  if(state.mode!=='exam' || state.examSubmitted){
+    let eh = document.getElementById('exam-header');
+    if(eh) eh.remove();
+  }
+
+  html += `<div class="back-btn" onclick="goHome()">← 返回首页</div>`;
+  html += `<div class="question-area">`;
+  html += `<div class="q-progress">
+    <span>${state.mode==='sequential'?'顺序练习':state.mode==='shuffle'?'乱序刷题':'模拟考试'}</span>
+    <div class="bar"><div style="width:${progressPct}%"></div></div>
+    <span>${idx+1}/${state.questions.length}</span>
+  </div>`;
+
+  html += `<span class="q-type ${typeClass(q.type)}">${typeLabel(q.type)} · 第${q.chapter}章</span>`;
+  html += `<div class="q-text">${q.q}</div>`;
+
+  if(q.type==='single'){
+    html += `<div class="q-options">`;
+    q.opts.forEach((opt,i)=>{
+      let letter = String.fromCharCode(65+i);
+      let cls = 'q-option';
+      if(showAns){
+        if(letter===q.ans) cls += ' correct';
+        else if(ua===letter && letter!==q.ans) cls += ' wrong';
+      } else if(ua===letter) cls += ' selected';
+      html += `<button class="${cls}" ${showAns?'disabled':''} onclick="selectAnswer(${idx},'${letter}')">${opt}</button>`;
+    });
+    html += `</div>`;
+  } else if(q.type==='multi'){
+    html += `<div class="q-options">`;
+    q.opts.forEach((opt,i)=>{
+      let letter = String.fromCharCode(65+i);
+      let cls = 'q-option';
+      if(showAns){
+        if(q.ans.includes(letter)) cls += ' correct';
+        else if(ua.includes(letter)) cls += ' wrong';
+      } else if(ua.includes(letter)) cls += ' selected';
+      html += `<button class="${cls}" ${showAns?'disabled':''} onclick="toggleMulti(${idx},'${letter}')">${opt}</button>`;
+    });
+    html += `</div>`;
+    if(!showAns){
+      html += `<button class="btn btn-primary" style="margin-top:10px" onclick="checkMulti(${idx})">提交答案</button>`;
+    }
+  } else if(q.type==='judge'){
+    html += `<div class="q-options" style="display:flex;gap:12px">`;
+    let clsT = 'q-option', clsF = 'q-option';
+    if(showAns){
+      if('正确'===q.ans) clsT += ' correct'; else if(ua==='正确') clsT += ' wrong';
+      if('错误'===q.ans) clsF += ' correct'; else if(ua==='错误') clsF += ' wrong';
+    } else {
+      if(ua==='正确') clsT += ' selected';
+      if(ua==='错误') clsF += ' selected';
+    }
+    html += `<button class="${clsT}" style="flex:1;text-align:center" ${showAns?'disabled':''} onclick="selectAnswer(${idx},'正确')">✓ 正确</button>`;
+    html += `<button class="${clsF}" style="flex:1;text-align:center" ${showAns?'disabled':''} onclick="selectAnswer(${idx},'错误')">✗ 错误</button>`;
+    html += `</div>`;
+  } else if(q.type==='essay'){
+    html += `<div class="q-answer-box ${showAns?'show':''}" id="essay-ans-${idx}">
+      <b>参考答案：</b><br>${q.ans}
+    </div>`;
+    if(!showAns){
+      html += `<button class="btn btn-outline" style="margin-top:10px" onclick="showEssayAnswer(${idx})">显示答案</button>`;
+      html += `<button class="btn btn-warning" style="margin-top:10px;margin-left:8px" onclick="markEssayWrong(${idx})">我答错了，加入错题本</button>`;
+    }
+  }
+
+  if(showAns && q.type!=='essay'){
+    let isCorrect = checkCorrect(q, ua);
+    html += `<div class="q-answer-box show ${isCorrect?'':'wrong-ans'}">
+      ${isCorrect ? '✅ 回答正确！' : '❌ 回答错误！'} 正确答案：<b>${q.ans}</b>
+    </div>`;
+  }
+
+  html += `<div class="q-nav">`;
+  html += `<button class="btn btn-outline" ${idx===0?'disabled':''} onclick="prevQuestion()">← 上一题</button>`;
+  if(state.mode==='exam' && !state.examSubmitted){
+    html += `<span style="font-size:.85em;color:#888">已答 ${Object.keys(state.userAnswers).length}/${state.questions.length}</span>`;
+  }
+  html += `<button class="btn btn-outline" onclick="nextQuestion()">${idx===state.questions.length-1?'完成':'下一题'} →</button>`;
+  html += `</div>`;
+  html += `</div>`;
+
+  app.innerHTML = html;
+
+  // Re-attach exam header for exam mode
+  if(state.mode==='exam' && !state.examSubmitted){
+    renderExamHeader();
+  }
+
+  window.scrollTo(0,0);
+}
+
+function selectAnswer(idx, ans){
+  if(state.showAnswer[idx]) return;
+  state.userAnswers[idx] = ans;
+  state.showAnswer[idx] = true;
+
+  let q = state.questions[idx];
+  let correct = checkCorrect(q, ans);
+  state.results.push({q:q, userAns:ans, correct:correct});
+  if(!correct) addError(q.id);
+
+  renderQuestion();
+}
+
+function toggleMulti(idx, letter){
+  if(state.showAnswer[idx]) return;
+  let cur = state.userAnswers[idx] || '';
+  if(cur.includes(letter)) state.userAnswers[idx] = cur.replace(letter,'');
+  else state.userAnswers[idx] = (cur + letter).split('').sort().join('');
+  renderQuestion();
+}
+
+function checkMulti(idx){
+  if(state.showAnswer[idx]) return;
+  state.showAnswer[idx] = true;
+  let q = state.questions[idx];
+  let ua = state.userAnswers[idx] || '';
+  let correct = checkCorrect(q, ua);
+  state.results.push({q:q, userAns:ua, correct:correct});
+  if(!correct) addError(q.id);
+  renderQuestion();
+}
+
+function showEssayAnswer(idx){
+  state.showAnswer[idx] = true;
+  state.userAnswers[idx] = '已查看答案';
+  renderQuestion();
+}
+
+function markEssayWrong(idx){
+  if(state.showAnswer[idx]) return;
+  state.showAnswer[idx] = true;
+  state.userAnswers[idx] = '标记为错';
+  let q = state.questions[idx];
+  addError(q.id);
+  state.results.push({q:q, userAns:'标记为错', correct:false});
+  renderQuestion();
+}
+
+function checkCorrect(q, ua){
+  if(q.type==='multi'){
+    let sorted = ua.split('').sort().join('');
+    let sortedAns = q.ans.split('').sort().join('');
+    return sorted === sortedAns;
+  }
+  return ua === q.ans;
+}
+
+function prevQuestion(){
+  if(state.currentIndex>0) state.currentIndex--;
+  renderQuestion();
+}
+
+function nextQuestion(){
+  if(state.currentIndex < state.questions.length-1){
+    state.currentIndex++;
+    renderQuestion();
+  } else {
+    if(state.mode==='exam' && !state.examSubmitted){
+      submitExam();
+    } else {
+      finishPractice();
+    }
+  }
+}
+
+function goHome(){
+  clearInterval(state.examTimer);
+  state.mode = 'home';
+  state.questions = [];
+  renderHome();
+  let eh = document.getElementById('exam-header');
+  if(eh) eh.remove();
+}
+
+function finishPractice(){
+  let total = state.questions.length;
+  let answered = Object.keys(state.showAnswer).length;
+  let correct = state.results.filter(r=>r.correct).length;
+  let wrong = state.results.filter(r=>!r.correct).length;
+
+  let html = `<div class="result-card">`;
+  html += `<div class="back-btn" onclick="goHome()">← 返回首页</div>`;
+  html += `<h3>${state.mode==='sequential'?'顺序练习':'乱序刷题'} 完成！</h3>`;
+  html += `<div class="result-score score-pop">${answered>0?Math.round(correct/answered*100):0}分</div>`;
+  html += `<div class="result-detail">作答 ${answered}/${total} 题 · 正确 ${correct} 题 · 错误 ${wrong} 题</div>`;
+  html += `<div style="margin-top:16px">`;
+  html += `<button class="btn btn-primary" onclick="startMode('sequential')">再来一轮（顺序）</button> `;
+  html += `<button class="btn btn-outline" onclick="startMode('shuffle')">再来一轮（乱序）</button> `;
+  html += `<button class="btn btn-outline" onclick="goHome()">返回首页</button>`;
+  html += `</div>`;
+
+  if(state.results.length>0){
+    html += `<div class="result-list"><h4 style="margin-bottom:8px">详细结果：</h4>`;
+    state.results.forEach((r,i)=>{
+      html += `<div class="result-item ${r.correct?'ok':'fail'}">
+        <span class="mark">${r.correct?'✓':'✗'}</span>
+        <span>${i+1}. [${typeLabel(r.q.type)}·第${r.q.chapter}章] ${r.q.q.substring(0,50)}...<br>
+        ${r.correct?'':'你的答案：'+r.userAns+' → '}正确答案：${r.q.ans}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  app.innerHTML = html;
+  let eh = document.getElementById('exam-header');
+  if(eh) eh.remove();
+}
+
+// ========== 考试模式 ==========
+function submitExam(){
+  if(state.examSubmitted) return;
+  state.examSubmitted = true;
+  clearInterval(state.examTimer);
+
+  // Auto-submit unanswered
+  state.questions.forEach((q,idx)=>{
+    if(!state.showAnswer[idx]){
+      state.showAnswer[idx] = true;
+      if(!state.userAnswers[idx]) state.userAnswers[idx] = '(未作答)';
+      let ua = state.userAnswers[idx];
+      let correct = checkCorrect(q, ua);
+      state.results.push({q:q, userAns:ua, correct:correct});
+      if(!correct) addError(q.id);
+    }
+  });
+
+  let elapsed = Math.floor((Date.now() - state.examStartTime)/1000);
+  let total = state.questions.length;
+  let correct = state.results.filter(r=>r.correct).length;
+  let wrong = state.results.filter(r=>!r.correct).length;
+  let score = Math.round(correct/total*100);
+  let grade = score>=90?'优秀':score>=75?'良好':score>=60?'及格':'不及格';
+
+  let html = `<div class="result-card">`;
+  html += `<div class="back-btn" onclick="goHome()">← 返回首页</div>`;
+  html += `<h3>📝 模拟考试 成绩单</h3>`;
+  html += `<div class="result-score score-pop">${score}<span style="font-size:.4em">分</span></div>`;
+  html += `<div style="font-size:1.2em;color:#e74c3c;font-weight:bold">${grade}</div>`;
+  html += `<div class="result-detail">
+    用时 ${Math.floor(elapsed/60)}分${elapsed%60}秒 · 共 ${total} 题<br>
+    正确 <b style="color:#27ae60">${correct}</b> 题 · 错误 <b style="color:#e74c3c">${wrong}</b> 题 · 正确率 ${score}%
+  </div>`;
+  html += `<div style="margin-top:16px">`;
+  html += `<button class="btn btn-primary" onclick="startExam()">重新考试</button> `;
+  html += `<button class="btn btn-outline" onclick="goHome()">返回首页</button>`;
+  html += `</div>`;
+
+  if(state.results.length>0){
+    html += `<div class="result-list"><h4 style="margin-bottom:8px">答题详情：</h4>`;
+    state.results.forEach((r,i)=>{
+      html += `<div class="result-item ${r.correct?'ok':'fail'}">
+        <span class="mark">${r.correct?'✓':'✗'}</span>
+        <span>${i+1}. [${typeLabel(r.q.type)}·第${r.q.chapter}章] ${r.q.q.substring(0,55)}...<br>
+        ${r.correct?'':'你的答案：'+r.userAns+' → '}正确答案：${r.q.ans}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  app.innerHTML = html;
+  let eh = document.getElementById('exam-header');
+  if(eh) eh.remove();
+}
+
+// ========== 错题本 ==========
+function showErrors(){
+  let errIds = loadErrors();
+  let errQs = Q.filter(q=>errIds.includes(q.id));
+
+  state.mode = 'errors';
+  state.questions = errQs;
+  state.currentIndex = 0;
+  state.userAnswers = {};
+  state.showAnswer = {};
+
+  if(errQs.length===0){
+    app.innerHTML = `
+      <div class="back-btn" onclick="goHome()">← 返回首页</div>
+      <div class="result-card">
+        <div style="font-size:4em">🎉</div>
+        <h3>错题本为空</h3>
+        <p style="color:#888">继续加油，你已掌握所有题目！</p>
+        <button class="btn btn-primary" onclick="goHome()" style="margin-top:12px">去刷题</button>
+      </div>`;
+    return;
+  }
+
+  let html = `<div class="back-btn" onclick="goHome()">← 返回首页</div>`;
+  html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">`;
+  html += `<h3>📋 错题本（${errQs.length} 题）</h3>`;
+  html += `<button class="btn btn-danger" style="font-size:.8em;padding:6px 14px" onclick="if(confirm('确认清空所有错题？')){clearErrors();showErrors();}">清空错题本</button>`;
+  html += `</div>`;
+
+  // Group by chapter
+  let byChapter = {};
+  errQs.forEach(q=>{
+    if(!byChapter[q.chapter]) byChapter[q.chapter] = [];
+    byChapter[q.chapter].push(q);
+  });
+
+  for(let c in byChapter){
+    html += `<div style="margin-top:10px"><b style="color:#1a5276">第${c}章 ${CH[c]}（${byChapter[c].length}题）</b></div>`;
+    byChapter[c].forEach(q=>{
+      html += `<div class="error-item">
+        <span class="q-type ${typeClass(q.type)}" style="margin-bottom:6px">${typeLabel(q.type)}</span>
+        <div style="font-size:.9em;line-height:1.5;margin:6px 0">${q.q}</div>
+        <div style="font-size:.85em;color:#27ae60"><b>答案：${q.ans}</b></div>`;
+      if(q.type!=='essay'){
+        html += `<button class="btn btn-outline retry-btn" style="font-size:.8em;padding:4px 12px" onclick="retryError(${q.id})">重做此题</button>`;
+      } else {
+        html += `<button class="btn btn-outline retry-btn" style="font-size:.8em;padding:4px 12px" onclick="removeError(${q.id});showErrors();">我已掌握</button>`;
+      }
+      html += `</div>`;
+    });
+  }
+
+  app.innerHTML = html;
+}
+
+function retryError(qid){
+  let q = Q.find(x=>x.id===qid);
+  if(!q) return;
+  state.mode = 'retry';
+  state.questions = [q];
+  state.currentIndex = 0;
+  state.userAnswers = {};
+  state.showAnswer = {};
+  state.results = [];
+  renderQuestion();
+
+  // Override back behavior
+  let origCheck = checkCorrect;
+  let origNext = nextQuestion;
+  let self = this;
+
+  // We need to modify selectAnswer behavior for retry mode
+  let origSelect = selectAnswer;
+  // Intercept in render
+}
+
+// Override selectAnswer for retry mode
+const origSelectAnswer = selectAnswer;
+selectAnswer = function(idx, ans){
+  if(state.mode==='retry'){
+    let q = state.questions[idx];
+    if(q.type==='judge' && ans===q.ans){
+      removeError(q.id);
+      alert('✅ 回答正确！已从错题本移除。');
+      showErrors();
+      return;
+    } else if(q.type==='single' && ans===q.ans){
+      removeError(q.id);
+      alert('✅ 回答正确！已从错题本移除。');
+      showErrors();
+      return;
+    } else {
+      alert('❌ 回答错误，请再试一次！');
+      state.userAnswers = {};
+      state.showAnswer = {};
+      renderQuestion();
+      return;
+    }
+  }
+  origSelectAnswer(idx, ans);
+};
+
+// Override checkMulti for retry mode
+const origCheckMulti = checkMulti;
+checkMulti = function(idx){
+  if(state.mode==='retry'){
+    let q = state.questions[idx];
+    let ua = state.userAnswers[idx] || '';
+    let sorted = ua.split('').sort().join('');
+    let sortedAns = q.ans.split('').sort().join('');
+    if(sorted===sortedAns){
+      removeError(q.id);
+      alert('✅ 回答正确！已从错题本移除。');
+      showErrors();
+      return;
+    } else {
+      alert('❌ 回答错误，请再试一次！');
+      state.userAnswers = {};
+      state.showAnswer = {};
+      renderQuestion();
+      return;
+    }
+  }
+  origCheckMulti(idx);
+};
+
+// Handle next/prev for retry mode
+const origNext = nextQuestion;
+const origPrev = prevQuestion;
+nextQuestion = function(){
+  if(state.mode==='retry'){ showErrors(); return; }
+  origNext();
+};
+prevQuestion = function(){
+  if(state.mode==='retry'){ showErrors(); return; }
+  origPrev();
+};
+
+// ==================== 初始化 ====================
+console.log(`水利工程施工刷题库已就绪 · ${Q.length} 题 · 6章`);
+console.log('第1章',Q.filter(q=>q.chapter===1).length,'题');
+console.log('第2章',Q.filter(q=>q.chapter===2).length,'题');
+console.log('第3章',Q.filter(q=>q.chapter===3).length,'题');
+console.log('第4章',Q.filter(q=>q.chapter===4).length,'题');
+console.log('第5章',Q.filter(q=>q.chapter===5).length,'题');
+console.log('第6章',Q.filter(q=>q.chapter===6).length,'题');
+
+renderHome();
+</script>
+</body>
+</html>
