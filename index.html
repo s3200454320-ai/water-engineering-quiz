@@ -326,6 +326,7 @@ function clearErrors(){ saveErrors([]); }
 let state = {
   mode: 'home', // home|sequential|shuffle|exam|exam-result|errors
   chapters: [1,2,3,4,5,6],
+  types: ['single','multi','judge','essay'],
   questions: [],
   currentIndex: 0,
   userAnswers: {},  // index -> answer string
@@ -345,7 +346,7 @@ function getChapterCounts(){
 }
 
 function getFilteredQuestions(){
-  return Q.filter(q=>state.chapters.includes(q.chapter));
+  return Q.filter(q=>state.chapters.includes(q.chapter) && state.types.includes(q.type));
 }
 
 function shuffle(arr){
@@ -362,6 +363,10 @@ function typeClass(t){ return {single:'single',multi:'multi',judge:'judge',essay
 
 function renderHome(){
   let counts = getChapterCounts();
+  let typeLabels = {single:'单选题',multi:'多选题',judge:'判断题',essay:'简答题'};
+  let typeIcons = {single:'📌',multi:'☑️',judge:'⚖️',essay:'📝'};
+  let typeCounts = {};
+  ['single','multi','judge','essay'].forEach(t=>{ typeCounts[t] = Q.filter(q=>q.type===t).length; });
   let filtered = getFilteredQuestions();
   let html = `
     <div class="filter-panel">
@@ -376,6 +381,21 @@ function renderHome(){
       <div class="filter-actions">
         <button onclick="selectAllChapters()">全选</button>
         <button onclick="deselectAllChapters()">全不选</button>
+      </div>
+    </div>
+
+    <div class="filter-panel">
+      <h3>📋 题型筛选</h3>
+      <div class="chapter-grid" style="grid-template-columns:repeat(4,1fr)">
+        ${['single','multi','judge','essay'].map(t=>`
+          <div class="chapter-tag ${state.types.includes(t)?'active':''}" onclick="toggleType('${t}')">
+            ${typeIcons[t]} ${typeLabels[t]}<br><span class="count">${typeCounts[t]}题</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="filter-actions">
+        <button onclick="selectAllTypes()">全选</button>
+        <button onclick="deselectAllTypes()">全不选</button>
       </div>
       <div class="filter-info">当前选中：<b>${filtered.length}</b> 题（共 ${Q.length} 题）</div>
     </div>
@@ -405,6 +425,14 @@ function renderHome(){
   `;
   app.innerHTML = html;
 }
+
+function toggleType(t){
+  if(state.types.includes(t)) state.types = state.types.filter(x=>x!==t);
+  else state.types.push(t);
+  renderHome();
+}
+function selectAllTypes(){ state.types=['single','multi','judge','essay']; renderHome(); }
+function deselectAllTypes(){ state.types=[]; renderHome(); }
 
 function toggleChapter(c){
   if(state.chapters.includes(c)) state.chapters = state.chapters.filter(x=>x!==c);
